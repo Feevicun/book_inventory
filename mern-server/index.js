@@ -16,7 +16,7 @@ app.get('/', (req,res) => {
 
 //mongodb configuration
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = "mongodb+srv://mern-book-store:s2bwn6aHtbFPGCPS@cluster0.gtpqzxs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -41,6 +41,49 @@ async function run() {
     app.post("/upload-book", async(req,res) =>{
         const data = req.body;
         const result = await bookCollections.insertOne(data);
+        res.send(result);
+    })
+
+    //get all books from the database
+    app.get("/all-books", async(req, res) =>{
+        const books = await bookCollections.find();
+        const result = await books.toArray();
+        res.send(result);
+    })
+
+    //update a book data : patch or update methods
+    app.patch("/book/:id", async(req,res) =>{
+        const id = req.params.id;
+        // console.log(id);
+        const updateBookData = req.body;
+        const filter = {_id: new ObjectId(id)};
+        const options = {upsert: true};
+
+        const updateDoc = {
+            $set:{
+                ...updateBookData
+            }
+        }
+        //update
+        const result = await bookCollections.updateOne(filter, updateDoc, options);
+        res.send(result);
+    })
+
+    //delete a book data
+    app.delete("/book/:id", async(req,res)=>{
+        const id = req.params.id;
+        const filter = {_id: new ObjectId(id)};
+        const result = await bookCollections.deleteOne(filter);
+        res.send(result);
+    })
+
+    //find by category
+    app.get("/all-books", async(req, res) =>{
+        let query = {};
+        if(req.query?.category){
+            query = {category: req.query.category}
+        }
+        const result = await bookCollections.find(query).toArray();
         res.send(result);
     })
 
